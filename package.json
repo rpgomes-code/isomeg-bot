@@ -1,0 +1,21 @@
+{
+  "name": "isomeg-bot",
+  "version": "1.0.0",
+  "description": "Discord Bot named Isomeg",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "npx tsx src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "Rui Pedro Gomes (RPGOMES)",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@sapphire/framework": "^5.3.6",
+    "@sapphire/pieces": "^4.4.1",
+    "discord.js": "14.x",
+    "dotenv": "^16.5.0"
+  }
+}
