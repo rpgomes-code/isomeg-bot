@@ -1,7 +1,9 @@
-﻿import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, MessageFlags } from 'discord.js';
-import type { ApplicationCommandRegistry } from '@sapphire/framework';
+﻿import type {ApplicationCommandRegistry} from '@sapphire/framework';
+import {Command} from '@sapphire/framework';
+import {ChatInputCommandInteraction, MessageFlags} from 'discord.js';
 import {config} from "../lib/config";
+import {createCommandLog} from "../lib/logger";
+import {CommandType} from "../enums/commands";
 
 export class PingCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -29,10 +31,21 @@ export class PingCommand extends Command {
 
     // Handle slash command
     public override async chatInputRun(interaction: ChatInputCommandInteraction): Promise<void> {
+        createCommandLog({
+            command: Command.name,
+            guild: interaction.guild?.name ?? "DM",
+            type: CommandType.Slash,
+            user: {
+                username: interaction.user.username,
+                displayName: interaction.user.tag
+            },
+            createdAt: interaction.createdAt
+        })
+
         const startTime = Date.now();
 
         await interaction.reply({
-            content: 'Pinging...',
+            content: '🔄 *Pinging...*',
             flags: [
                 MessageFlags.Ephemeral
             ]
@@ -41,7 +54,7 @@ export class PingCommand extends Command {
         const endTime = Date.now();
         const apiLatency = Math.abs(endTime - startTime);
 
-        const content = `Pong! Bot Latency: ${Math.abs(Math.round(this.container.client.ws.ping))}ms. API Latency: ${apiLatency}ms.`;
+        const content = `🏓 **Pong!**\n**Latency:** \`${Math.abs(Math.round(this.container.client.ws.ping))}ms\`\n**API Latency:** \`${apiLatency}ms\``;
 
         await interaction.editReply({ content });
     }

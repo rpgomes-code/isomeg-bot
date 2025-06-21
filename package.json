@@ -4,9 +4,12 @@
   "description": "Discord Bot named Isomeg",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "npx tsx src/index.ts",
+    "dev": "tsc && node dist/index.js",
+    "dev:watch": "concurrently \"tsc --watch\" \"nodemon dist/index.js\"",
+    "dev:build": "tsc --watch",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "clean": "rmdir /s /q dist"
   },
   "keywords": [],
   "author": "Rui Pedro Gomes (RPGOMES)",
@@ -17,5 +20,9 @@
     "@sapphire/pieces": "^4.4.1",
     "discord.js": "14.x",
     "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.10"
   }
 }

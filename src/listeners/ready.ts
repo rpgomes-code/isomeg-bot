@@ -1,5 +1,6 @@
 ﻿import {Events, Listener} from '@sapphire/framework';
 import {Client} from "../core/client";
+import {createListenerLog} from "../lib/logger";
 
 export class ReadyListener extends Listener {
     constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -10,6 +11,14 @@ export class ReadyListener extends Listener {
         });
     }
     public async run(client: Client): Promise<void> {
-        this.container.logger.info(`Ready! Logged in as ${client.user?.tag}`);
+        createListenerLog({
+            type: Events.ClientReady,
+            guild: "#",
+            user: {
+                username: client.user.tag,
+                displayName: client.user.displayName
+            },
+            createdAt: new Date()
+        })
     }
 }
