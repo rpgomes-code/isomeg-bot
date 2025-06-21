@@ -1,11 +1,11 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
 import { ChatInputCommandInteraction, EmbedBuilder, User, MessageFlags } from 'discord.js';
-import { config } from "../constants/config";
-import { createCommandLog } from "../lib/logger";
-import { CommandType } from "../enums/commands/general";
-import { RarityLevel } from "../types/commands/howgay";
-import { rarityLevels } from "../constants/commands/howgay";
+import { config } from "../../constants/config";
+import { createCommandLog } from "../../lib/logger";
+import { CommandType } from "../../enums/commands/general";
+import { RarityLevel } from "../../types/commands/howgay";
+import { rarityLevels } from "../../constants/commands/howgay";
 
 export class HowGayCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
