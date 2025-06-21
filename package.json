@@ -1,7 +1,7 @@
 {
   "name": "isomeg-bot",
   "version": "1.0.0",
-  "description": "Discord Bot named Isomeg",
+  "description": "Isomeg is a Discord bot made with DiscordJs & Sapphire ",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsc && node dist/index.js",
