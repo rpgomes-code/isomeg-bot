@@ -1,9 +1,9 @@
 ﻿import type {ApplicationCommandRegistry} from '@sapphire/framework';
 import {Command} from '@sapphire/framework';
 import {ChatInputCommandInteraction, MessageFlags} from 'discord.js';
-import {config} from "../lib/config";
+import {config} from "../constants/config";
 import {createCommandLog} from "../lib/logger";
-import {CommandType} from "../enums/commands";
+import {CommandType} from "../enums/commands/general";
 
 export class PingCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {

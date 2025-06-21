@@ -1,5 +1,5 @@
 ﻿import { Client, GatewayIntentBits } from 'discord.js';
-import {config} from "../lib/config";
+import {config} from "../constants/config";
 
 async function clearDuplicateCommands() {
     const client = new Client({ intents: [GatewayIntentBits.Guilds] });

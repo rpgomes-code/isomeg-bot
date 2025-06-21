@@ -1,5 +1,5 @@
 ﻿import {Client} from './core/client';
-import {config} from './lib/config';
+import {config} from './constants/config';
 
 const client: Client = new Client();
 

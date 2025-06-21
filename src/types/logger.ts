@@ -1,4 +1,4 @@
-﻿import {CommandType} from "../enums/commands";
+﻿import {CommandType} from "../enums/commands/general";
 
 type UserLog = {
     username: string;

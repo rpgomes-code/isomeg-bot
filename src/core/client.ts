@@ -1,6 +1,6 @@
 ﻿import {SapphireClient} from '@sapphire/framework';
 import {GatewayIntentBits, Partials} from 'discord.js';
-import {config} from '../lib/config';
+import {config} from '../constants/config';
 
 export class Client extends SapphireClient {
     constructor() {
