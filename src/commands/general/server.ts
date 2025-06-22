@@ -56,7 +56,7 @@ export class ServerCommand extends Command {
         await guild.fetch();
 
         const embed = new EmbedBuilder()
-            .setColor(Colors.Blue)
+            .setColor(Colors.DarkOrange)
             .setTitle(`🏰 ${guild.name}`)
             .setThumbnail(guild.iconURL({ size: 256 }) || null)
             .addFields([
