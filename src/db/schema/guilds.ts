@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, pgTable, uuid, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 const timestamps = {
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -12,6 +12,12 @@ export const guilds = pgTable("guilds", {
     guildName: varchar("guild_name", { length: 100 }),
     prefix: varchar("prefix", { length: 5 }).notNull().default("$"),
     welcomeChannelId: varchar("welcome_channel_id", { length: 30 }),
+    goodbyeChannelId: varchar("goodbye_channel_id", { length: 30 }),
+    birthdayChannelId: varchar("birthday_channel_id", { length: 30 }),
+    welcomeEnabled: boolean("welcome_enabled").notNull().default(true),
+    goodbyeEnabled: boolean("goodbye_enabled").notNull().default(true),
+    welcomeMessage: text("welcome_message"),
+    goodbyeMessage: text("goodbye_message"),
     modLogChannelId: varchar("mod_log_channel_id", { length: 30 }),
     xpChannelId: varchar("xp_channel_id", { length: 30 }),
     xpNotifyInDm: boolean("xp_notify_in_dm").notNull().default(true),

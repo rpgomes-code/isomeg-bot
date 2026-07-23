@@ -13,6 +13,8 @@ export async function ensureGuildSettings(guildId: string, guildName: string): P
             guildId,
             guildName,
             prefix: DEFAULT_PREFIX,
+            welcomeEnabled: true,
+            goodbyeEnabled: true,
             xpEnabled: true,
             xpNotifyInDm: true,
             xpCooldownSeconds: DEFAULT_XP_COOLDOWN_SECONDS,

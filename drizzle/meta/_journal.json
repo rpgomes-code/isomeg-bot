@@ -15,6 +15,13 @@
       "when": 1784820639414,
       "tag": "0001_xp_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784822198144,
+      "tag": "0002_community_features",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { createListenerLog } from "../lib/logger";
 import { seedGuild } from "../db/seed";
 import { config } from '../constants/config';
 import { createPlayer } from "../music/player";
+import { startBirthdayReminderScheduler } from "../lib/birthdays";
 
 export class ReadyListener extends Listener {
     constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -37,6 +38,8 @@ export class ReadyListener extends Listener {
                 await seedGuild(guildConfig.id, guildConfig.name);
             }
         }
+
+        startBirthdayReminderScheduler(client, this.container.logger);
 
         this.container.logger.info(
             `Bot is online in ${client.guilds.cache.size} guilds, database synced. Commands will be re-registered on first use.`

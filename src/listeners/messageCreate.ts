@@ -2,6 +2,7 @@ import { Listener, Events } from "@sapphire/framework";
 import type { Message } from "discord.js";
 import { addXp, getRandomXp } from "../lib/xp";
 import { ensureGuildSettings } from "../lib/guildSettings";
+import { recordMessageActivity } from "../lib/activity";
 
 export class MessageCreateListener extends Listener {
     constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -15,6 +16,13 @@ export class MessageCreateListener extends Listener {
         if (message.author.bot || !message.guildId || !message.guild) return;
 
         const guildConfig = await ensureGuildSettings(message.guildId, message.guild.name);
+
+        await recordMessageActivity(message.guildId, message.channelId, message.author.id).catch((error) => {
+            this.container.logger.warn(
+                `[Activity] Could not record message activity: ${error instanceof Error ? error.message : error}`
+            );
+        });
+
         if (!guildConfig.xpEnabled) return;
         if (guildConfig.xpChannelId && guildConfig.xpChannelId !== message.channelId) return;
 
