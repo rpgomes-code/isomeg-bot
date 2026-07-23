@@ -15,6 +15,7 @@
   "author": "Rui Pedro Gomes (RPGOMES)",
   "license": "ISC",
   "type": "commonjs",
+  "packageManager": "pnpm@10.34.5",
   "dependencies": {
     "@sapphire/framework": "^5.3.6",
     "@sapphire/pieces": "^4.4.1",
