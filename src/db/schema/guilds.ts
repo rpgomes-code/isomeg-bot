@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { integer, pgTable, uuid, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
 
 const timestamps = {
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -16,6 +16,9 @@ export const guilds = pgTable("guilds", {
     xpChannelId: varchar("xp_channel_id", { length: 30 }),
     xpNotifyInDm: boolean("xp_notify_in_dm").notNull().default(true),
     xpEnabled: boolean("xp_enabled").notNull().default(true),
+    xpCooldownSeconds: integer("xp_cooldown_seconds").notNull().default(30),
+    xpMin: integer("xp_min").notNull().default(10),
+    xpMax: integer("xp_max").notNull().default(30),
     musicEnabled: boolean("music_enabled").notNull().default(true),
     ...timestamps,
 });

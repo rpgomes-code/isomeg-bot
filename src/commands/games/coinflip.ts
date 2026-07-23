@@ -61,7 +61,7 @@ export class CoinflipCommand extends Command {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle("🪙 Coin Flip")
+            .setTitle("Coin Flip")
             .setColor(Colors.Gold)
             .setTimestamp()
             .setFooter({
@@ -77,20 +77,20 @@ export class CoinflipCommand extends Command {
             let description = `Flipped ${times} coins...\n\n`;
 
             if (times <= 20) {
-                // Show individual results with emojis for smaller amounts
+                // Show individual results for smaller amounts.
                 const formattedResults = results.map(result =>
-                    result === "Heads" ? "🟡" : "⚪"
+                    result === "Heads" ? "H" : "T"
                 ).join(" ");
                 description += `**Results:** ${formattedResults}\n`;
-                description += `🟡 = Heads | ⚪ = Tails\n\n`;
+                description += `H = Heads | T = Tails\n\n`;
             } else {
                 // For larger amounts, show a summary
                 description += `*Too many results to display individually*\n\n`;
             }
 
             description += `**Summary:**\n`;
-            description += `🟡 Heads: **${heads}** (${((heads / times) * 100).toFixed(1)}%)\n`;
-            description += `⚪ Tails: **${tails}** (${((tails / times) * 100).toFixed(1)}%)`;
+            description += `Heads: **${heads}** (${((heads / times) * 100).toFixed(1)}%)\n`;
+            description += `Tails: **${tails}** (${((tails / times) * 100).toFixed(1)}%)`;
 
             embed.setDescription(description);
         }
@@ -117,9 +117,9 @@ export class CoinflipCommand extends Command {
             if (result === "Heads") heads++; else tails++;
         }
         if (times === 1) {
-            await message.reply(`🪙 The coin landed on: **${results[0]}**!`);
+            await message.reply(`The coin landed on: **${results[0]}**!`);
         } else {
-            await message.reply(`🪙 Flipped ${times} coins: ${heads} Heads, ${tails} Tails`);
+            await message.reply(`Flipped ${times} coins: ${heads} Heads, ${tails} Tails`);
         }
     }
 }

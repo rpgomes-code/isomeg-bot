@@ -1,6 +1,9 @@
-﻿import { SapphireClient } from '@sapphire/framework';
-import { GatewayIntentBits, Partials } from 'discord.js';
-import { config } from '../constants/config';
+import { SapphireClient } from "@sapphire/framework";
+import type { Message } from "discord.js";
+import { GatewayIntentBits, Partials } from "discord.js";
+import { config } from "../constants/config";
+import { DEFAULT_PREFIX } from "../constants/defaults";
+import { ensureGuildSettings } from "../lib/guildSettings";
 
 export class Client extends SapphireClient {
     constructor() {
@@ -9,24 +12,32 @@ export class Client extends SapphireClient {
                 GatewayIntentBits.Guilds,
                 GatewayIntentBits.MessageContent,
                 GatewayIntentBits.GuildMessages,
-                GatewayIntentBits.GuildVoiceStates
+                GatewayIntentBits.GuildVoiceStates,
             ],
             partials: [
                 Partials.User,
                 Partials.Message,
-                Partials.Channel
+                Partials.Channel,
             ],
             presence: config.botConfig.presence,
-            defaultPrefix: "$",
+            defaultPrefix: DEFAULT_PREFIX,
+            fetchPrefix: async (message: Message) => {
+                if (!message.guildId || !message.guild) {
+                    return DEFAULT_PREFIX;
+                }
+
+                const settings = await ensureGuildSettings(message.guildId, message.guild.name);
+                return settings.prefix;
+            },
             defaultCooldown: {
                 filteredUsers: [
-                    ...config.adminUsers.map(user => user.id)
-                ]
+                    ...config.adminUsers.map((user) => user.id),
+                ],
             },
             loadMessageCommandListeners: true,
             loadApplicationCommandRegistriesStatusListeners: true,
             shards: "auto",
-            typing: true
+            typing: true,
         });
     }
 

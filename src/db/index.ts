@@ -13,7 +13,7 @@ const client = postgres(connectionString, { max: 5 });
 export const db = drizzle(client, { schema, casing: "snake_case" });
 
 /**
- * Reusable table creator with project prefix — useful for multi-project databases.
+ * Reusable table creator with project prefix. Useful for multi-project databases.
  * Use this instead of pgTable if you need namespaced tables.
  */
 export const projectTable = pgTableCreator((name) => `isomeg_${name}`);

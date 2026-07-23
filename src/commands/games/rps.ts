@@ -4,7 +4,7 @@ import { ChatInputCommandInteraction, EmbedBuilder, Colors, Message } from 'disc
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 import { RPSChoice } from "../../enums/commands/rps";
-import { choices, emojis, winningCombos } from "../../constants/commands/rps";
+import { choices, winningCombos } from "../../constants/commands/rps";
 
 export class RPSCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -68,21 +68,18 @@ export class RPSCommand extends Command {
             color = Colors.Red;
         }
 
-        const userEmoji = emojis[userChoice];
-        const botEmoji = emojis[botChoice];
-
         const embed = new EmbedBuilder()
             .setColor(color)
             .setTitle("Rock Paper Scissors")
             .addFields([
                 {
                     name: "Your Choice",
-                    value: `${userEmoji} ${this.capitalizeFirst(userChoice)}`,
+                    value: this.capitalizeFirst(userChoice),
                     inline: true,
                 },
                 {
                     name: "My Choice",
-                    value: `${botEmoji} ${this.capitalizeFirst(botChoice)}`,
+                    value: this.capitalizeFirst(botChoice),
                     inline: true,
                 },
                 {
@@ -128,8 +125,6 @@ export class RPSCommand extends Command {
         if (userChoice === botChoice) { result = "It's a tie!"; }
         else if (winningCombos[userChoice] === botChoice) { result = "You win!"; }
         else { result = "I win!"; }
-        const userEmoji = emojis[userChoice];
-        const botEmoji = emojis[botChoice];
-        await message.reply(`${userEmoji} ${this.capitalizeFirst(userChoice)} vs ${botEmoji} ${this.capitalizeFirst(botChoice)} - ${result}`);
+        await message.reply(`${this.capitalizeFirst(userChoice)} vs ${this.capitalizeFirst(botChoice)} - ${result}`);
     }
 }

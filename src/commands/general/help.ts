@@ -1,61 +1,16 @@
 import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags, Message } from 'discord.js';
+import { ChatInputCommandInteraction, EmbedBuilder, Colors, MessageFlags, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
+import { DEFAULT_PREFIX } from "../../constants/defaults";
+import { ensureGuildSettings } from "../../lib/guildSettings";
 
 interface CommandInfo {
     name: string;
     description: string;
+    aliases: string[];
 }
-
-const COMMANDS: Record<string, CommandInfo[]> = {
-    "General": [
-        { name: "ping", description: "Check the bot's latency." },
-        { name: "avatar", description: "Get a user's avatar." },
-        { name: "server", description: "Display information about the server." },
-        { name: "user", description: "Display information about a user." },
-        { name: "help", description: "Show this help menu." },
-    ],
-    "Games": [
-        { name: "8ball", description: "Ask the magic 8-ball a question." },
-        { name: "coinflip", description: "Flip a virtual coin." },
-        { name: "dice", description: "Roll one or more dice." },
-        { name: "rps", description: "Play rock, paper, scissors." },
-    ],
-    "Jokes": [
-        { name: "howgay", description: "Check how gay someone is (humor command)." },
-    ],
-    "Music": [
-        { name: "play", description: "Play a song or playlist from YouTube/Spotify." },
-        { name: "queue", description: "Display the current music queue." },
-        { name: "skip", description: "Skip the current track." },
-        { name: "stop", description: "Stop the music player and leave voice." },
-        { name: "pause", description: "Pause the current track." },
-        { name: "resume", description: "Resume the paused music." },
-        { name: "volume", description: "Set or check the volume." },
-        { name: "shuffle", description: "Shuffle the current queue." },
-    ],
-    "Moderation": [
-        { name: "warn", description: "Warn a user." },
-        { name: "warns", description: "View a user's active warnings." },
-        { name: "delwarn", description: "Remove a warning from a user." },
-        { name: "mute", description: "Timeout a user." },
-        { name: "unmute", description: "Remove a user's timeout." },
-        { name: "ban", description: "Ban a user." },
-        { name: "kick", description: "Kick a user." },
-        { name: "setlog", description: "Set the moderation log channel." },
-    ],
-    "Engagement": [
-        { name: "level", description: "Check your level and XP." },
-        { name: "leaderboard", description: "Show the XP leaderboard." },
-        { name: "daily", description: "Claim your daily coins." },
-        { name: "balance", description: "Check your coin balance." },
-    ],
-    "Integrations": [
-        { name: "hltb", description: "Check game completion times from howlongtobeat.com." },
-    ],
-};
 
 export class HelpCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -74,11 +29,8 @@ export class HelpCommand extends Command {
                     .setDescription("Show all available commands.")
                     .addStringOption((option) =>
                         option.setName("category")
-                            .setDescription("Filter by category")
+                            .setDescription("Filter by category name")
                             .setRequired(false)
-                            .addChoices(
-                                ...Object.keys(COMMANDS).map(cat => ({ name: cat, value: cat }))
-                            )
                     ),
             {
                 registerCommandIfMissing: true,
@@ -96,6 +48,8 @@ export class HelpCommand extends Command {
         });
 
         const category = interaction.options.getString("category");
+        const prefix = await this.getPrefix(interaction.guild?.id, interaction.guild?.name);
+        const commands = this.getCommandsByCategory();
 
         const embed = new EmbedBuilder()
             .setTitle("Help")
@@ -107,20 +61,23 @@ export class HelpCommand extends Command {
             });
 
         if (category) {
-            const cmds = COMMANDS[category];
-            if (!cmds) {
+            const match = this.findCategory(commands, category);
+            if (!match) {
                 await interaction.reply({ content: "Unknown category.", flags: [MessageFlags.Ephemeral] });
                 return;
             }
-            embed.setDescription(cmds.map(c => `**$${c.name}** - ${c.description}`).join("\n"));
+
+            embed
+                .setTitle(`Help: ${match}`)
+                .setDescription(commands[match].map(command => this.formatCommand(command, prefix)).join("\n"));
         } else {
             let total = "";
-            for (const [cat, cmds] of Object.entries(COMMANDS)) {
+            for (const [cat, cmds] of Object.entries(commands)) {
                 total += `**${cat}** (${cmds.length} commands)\n`;
             }
             embed.setDescription(
-                total + "\nUse `$help <category>` to see commands for a specific category.\n" +
-                "Prefix: `$`"
+                total + `\nUse \`${prefix}help <category>\` or \`/help category:<category>\` for a specific category.\n` +
+                `Prefix: \`${prefix}\``
             );
         }
 
@@ -129,18 +86,69 @@ export class HelpCommand extends Command {
 
     public override async messageRun(message: Message, args: any): Promise<void> {
         const rawCategory = await args.remainder('string').catch(() => null);
-        const category = rawCategory ? rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1) : undefined;
+        const prefix = await this.getPrefix(message.guild?.id, message.guild?.name);
+        const commands = this.getCommandsByCategory();
+        const category = rawCategory ? this.findCategory(commands, rawCategory) : undefined;
 
-        if (category && COMMANDS[category]) {
-            const description = COMMANDS[category].map(c => `\`$${c.name}\` - ${c.description}`).join("\n");
+        if (category) {
+            const description = commands[category].map(command => this.formatCommand(command, prefix)).join("\n");
             await message.reply(description);
         } else {
             let description = "";
-            for (const [cat, cmds] of Object.entries(COMMANDS)) {
+            for (const [cat, cmds] of Object.entries(commands)) {
                 description += `**${cat}** (${cmds.length} commands)\n`;
             }
-            description += "\nUse `$help <category>` to see commands for a specific category.";
+            description += `\nUse \`${prefix}help <category>\` to see commands for a specific category.`;
             await message.reply(description);
         }
+    }
+
+    private getCommandsByCategory(): Record<string, CommandInfo[]> {
+        const commandStore = this.container.stores.get("commands");
+        const categories: Record<string, CommandInfo[]> = {};
+
+        for (const command of commandStore.values()) {
+            const commandAny = command as Command & { fullCategory?: string[]; category?: string | null; aliases?: string[] };
+            const category = this.formatCategory(commandAny.fullCategory?.[0] ?? commandAny.category ?? "Other");
+            categories[category] ??= [];
+            categories[category].push({
+                name: command.name,
+                description: command.description,
+                aliases: commandAny.aliases ?? [],
+            });
+        }
+
+        const sortedEntries = Object.entries(categories)
+            .map(([category, commands]): [string, CommandInfo[]] => [
+                category,
+                commands.sort((a, b) => a.name.localeCompare(b.name)),
+            ])
+            .sort(([a], [b]) => a.localeCompare(b));
+
+        return Object.fromEntries(sortedEntries);
+    }
+
+    private findCategory(commands: Record<string, CommandInfo[]>, category: string): string | null {
+        const normalized = category.trim().toLowerCase();
+        return Object.keys(commands).find((name) => name.toLowerCase() === normalized) ?? null;
+    }
+
+    private formatCategory(category: string): string {
+        return category
+            .split(/[\\/_-]/)
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ") || "Other";
+    }
+
+    private formatCommand(command: CommandInfo, prefix: string): string {
+        const aliases = command.aliases.length > 0 ? ` (aliases: ${command.aliases.map(alias => `\`${prefix}${alias}\``).join(", ")})` : "";
+        return `\`/${command.name}\` \`${prefix}${command.name}\` - ${command.description}${aliases}`;
+    }
+
+    private async getPrefix(guildId?: string, guildName?: string): Promise<string> {
+        if (!guildId || !guildName) return DEFAULT_PREFIX;
+        const settings = await ensureGuildSettings(guildId, guildName);
+        return settings.prefix;
     }
 }

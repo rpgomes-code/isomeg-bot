@@ -1,11 +1,10 @@
 import { config } from './constants/config';
 import { runMigrations } from './db/migrate';
+import { assertEnv } from './lib/env';
 import { Client } from './core/client';
 
 async function main(): Promise<void> {
-    if (!config.botConfig.clientToken) {
-        throw new Error("CLIENT_TOKEN is not defined in environment variables");
-    }
+    assertEnv(config.botConfig.requiredEnv);
 
     await runMigrations();
 

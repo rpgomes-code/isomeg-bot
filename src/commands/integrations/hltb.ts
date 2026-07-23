@@ -25,6 +25,14 @@ export class HltbCommand extends Command {
                     .setDescription("Check game completion times from howlongtobeat.com.")
                     .addStringOption((option) =>
                         option.setName("game").setDescription("Name of the game").setRequired(true)
+                    )
+                    .addIntegerOption((option) =>
+                        option
+                            .setName("result")
+                            .setDescription("Pick a result number from the search results.")
+                            .setRequired(false)
+                            .setMinValue(1)
+                            .setMaxValue(5)
                     ),
             {
                 registerCommandIfMissing: true,
@@ -42,7 +50,8 @@ export class HltbCommand extends Command {
         });
 
         const query = interaction.options.getString("game", true);
-        await this.handleHltb(query, interaction);
+        const resultIndex = interaction.options.getInteger("result") ?? 1;
+        await this.handleHltb(query, interaction, resultIndex);
     }
 
     public override async messageRun(message: Message, args: any): Promise<void> {
@@ -54,15 +63,18 @@ export class HltbCommand extends Command {
             createdAt: message.createdAt
         });
 
-        const query = await args.rest('string').catch(() => null);
+        const rawQuery = await args.rest('string').catch(() => null);
+        const match = rawQuery?.match(/^([1-5])\s+(.+)$/);
+        const requestedResult = match ? Number.parseInt(match[1], 10) : 1;
+        const query = match ? match[2] : rawQuery;
         if (!query) {
             await message.reply("Please provide a game name! e.g. `$hltb Elden Ring`");
             return;
         }
-        await this.handleHltb(query, message);
+        await this.handleHltb(query, message, requestedResult);
     }
 
-    private async handleHltb(query: string, target: ChatInputCommandInteraction | Message) {
+    private async handleHltb(query: string, target: ChatInputCommandInteraction | Message, requestedResult = 1) {
         const sendError = async (content: string) => {
             if (target instanceof ChatInputCommandInteraction) {
                 if (target.deferred || target.replied) {
@@ -84,14 +96,15 @@ export class HltbCommand extends Command {
             result = await this.hltb.search(query, SearchModifier.HIDE_DLC);
         } catch (error) {
             const msg = error instanceof Error ? error.message : "An unexpected error occurred";
-            return sendError(`❌ Error searching for "${query}": ${msg}`);
+            return sendError(`Error searching for "${query}": ${msg}`);
         }
 
         if (!result || result.length === 0) {
             return sendError(`No results found for "${query}".`);
         }
 
-        const game = result[0];
+        const resultIndex = Math.min(Math.max(requestedResult, 1), Math.min(result.length, 5)) - 1;
+        const game = result[resultIndex];
 
         const formatTime = (seconds?: number, count?: number) => {
             if (!seconds) return "N/A";
@@ -108,9 +121,28 @@ export class HltbCommand extends Command {
         if (game.coopTime) fields.push({ name: "Co-op", value: formatTime(game.coopTime, game.coopCount), inline: true });
         if (game.multiplayerTime) fields.push({ name: "Multiplayer", value: formatTime(game.multiplayerTime, game.multiplayerCount), inline: true });
 
+        const otherMatches = result
+            .slice(0, 5)
+            .map((candidate: any, index: number) => {
+                const marker = index === resultIndex ? "selected" : `${index + 1}`;
+                const year = candidate.releaseYear ? ` (${candidate.releaseYear})` : "";
+                return `${marker}. ${candidate.name}${year}`;
+            })
+            .join("\n");
+
+        if (otherMatches) {
+            fields.push({
+                name: "Search Results",
+                value: otherMatches,
+                inline: false,
+            });
+        }
+
         const footerParts: string[] = [`Source: howlongtobeat.com`];
         if (game.releaseYear) footerParts.push(`Released: ${game.releaseYear}`);
-        if (game.platforms.length > 0) footerParts.push(game.platforms.slice(0, 5).join(", "));
+        if (Array.isArray(game.platforms) && game.platforms.length > 0) {
+            footerParts.push(game.platforms.slice(0, 5).join(", "));
+        }
 
         const embed = new EmbedBuilder()
             .setTitle(`How Long To Beat: ${game.name}`)

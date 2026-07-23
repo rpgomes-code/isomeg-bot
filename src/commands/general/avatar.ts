@@ -58,7 +58,7 @@ export class AvatarCommand extends Command {
         const isServerAvatar = serverAvatarURL && serverAvatarURL !== globalAvatarURL;
 
         const embed = new EmbedBuilder()
-            .setTitle(`🖼️ ${target.displayName}'s Avatar`)
+            .setTitle(`${target.displayName}'s Avatar`)
             .setColor(Colors.DarkAqua)
             .setImage(displayAvatarURL)
             .setTimestamp()
@@ -72,17 +72,17 @@ export class AvatarCommand extends Command {
 
         if (!globalAvatarURL) {
             description = "*Using default Discord avatar*\n\n";
-            description += `[🔗 View Original](${displayAvatarURL})`;
+            description += `[View Original](${displayAvatarURL})`;
         } else if (isServerAvatar) {
             description = "*Showing server-specific avatar*\n\n";
-            description += `[🔗 View Original](${displayAvatarURL}) • [🌍 Global Avatar](${globalAvatarURL})`;
+            description += `[View Original](${displayAvatarURL}) | [Global Avatar](${globalAvatarURL})`;
         } else {
             description = "*Showing global avatar*\n\n";
-            description += `[🔗 View Original](${displayAvatarURL})`;
+            description += `[View Original](${displayAvatarURL})`;
 
             // Add a server avatar link if it exists and is different
             if (serverAvatarURL) {
-                description += ` • [🏠 Server Avatar](${serverAvatarURL})`;
+                description += ` | [Server Avatar](${serverAvatarURL})`;
             }
         }
 
@@ -107,6 +107,6 @@ export class AvatarCommand extends Command {
         const globalAvatarURL = target.avatarURL({ size: 1024 });
         const serverAvatarURL = member?.avatarURL({ size: 1024 });
         const displayAvatarURL = serverAvatarURL || globalAvatarURL || target.defaultAvatarURL;
-        await message.reply(`\u{1f5fc}\u{fe0f} **${target.displayName}'s Avatar:** ${displayAvatarURL}`);
+        await message.reply(`**${target.displayName}'s Avatar:** ${displayAvatarURL}`);
     }
 }

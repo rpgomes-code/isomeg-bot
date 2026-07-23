@@ -74,7 +74,7 @@ export class DiceCommand extends Command {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle("🎲 Dice Roll")
+            .setTitle("Dice Roll")
             .setColor(Colors.DarkGold)
             .setTimestamp()
             .setFooter({
@@ -103,7 +103,7 @@ export class DiceCommand extends Command {
 
             if (highest === sides) {
                 embed.addFields({
-                    name: "🌟 Critical Success!",
+                    name: "Critical Success!",
                     value: `You rolled the highest possible number (${sides})!`,
                     inline: false
                 });
@@ -111,7 +111,7 @@ export class DiceCommand extends Command {
 
             if (lowest === 1) {
                 embed.addFields({
-                    name: "💫 Critical Fail!",
+                    name: "Critical Fail!",
                     value: "You rolled the lowest possible number (1)!",
                     inline: false
                 });
@@ -146,7 +146,7 @@ export class DiceCommand extends Command {
         }
 
         if (count === 1) {
-            await message.reply(`🎲 You rolled a **${rolls[0]}**!`);
+            await message.reply(`You rolled a **${rolls[0]}**!`);
         } else {
             let desc = `Rolling ${count} d${sides}: ${rolls.join(", ")}`;
             if (showSum) desc += ` | Total: **${total}**`;

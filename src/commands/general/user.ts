@@ -51,7 +51,7 @@ export class UserCommand extends Command {
 
         const embed = new EmbedBuilder()
             .setColor(Colors.Blue)
-            .setTitle(`👤 User Information - ${target.username}`)
+            .setTitle(`User Information - ${target.username}`)
             .setThumbnail(target.displayAvatarURL({ size: 256 }))
             .addFields([
                 {
@@ -76,7 +76,7 @@ export class UserCommand extends Command {
                 },
                 {
                     name: "Is Bot",
-                    value: target.bot ? "✅ Yes" : "❌ No",
+                    value: target.bot ? "Yes" : "No",
                     inline: true
                 }
             ])
@@ -120,13 +120,13 @@ export class UserCommand extends Command {
             // Add server-specific badges/status
             const badges: string[] = [];
             if (member.premiumSince) {
-                badges.push("💎 Nitro Booster");
+                badges.push("Nitro Booster");
             }
             if (member.permissions.has('Administrator')) {
-                badges.push("👑 Administrator");
+                badges.push("Administrator");
             }
             if (member.permissions.has('ModerateMembers')) {
-                badges.push("🛡️ Moderator");
+                badges.push("Moderator");
             }
 
             if (badges.length > 0) {

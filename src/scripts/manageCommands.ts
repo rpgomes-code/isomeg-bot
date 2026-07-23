@@ -6,7 +6,7 @@ async function clearDuplicateCommands() {
 
     await client.login(process.env.CLIENT_TOKEN);
 
-    console.log('🧹 Clearing duplicate commands...');
+    console.log('Clearing duplicate commands...');
 
     try {
         // Clear global commands
@@ -22,11 +22,11 @@ async function clearDuplicateCommands() {
             await guild.commands.set([]);
         }
 
-        console.log('✅ All duplicate commands cleared!');
-        console.log('🔄 Now restart your main bot to re-register commands properly.');
+        console.log('All duplicate commands cleared!');
+        console.log('Now restart your main bot to re-register commands properly.');
 
     } catch (error) {
-        console.error('❌ Error clearing commands:', error);
+        console.error('Error clearing commands:', error);
     } finally {
         client.destroy();
     }

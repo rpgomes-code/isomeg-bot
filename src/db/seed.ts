@@ -1,6 +1,7 @@
 import { db } from ".";
 import { guilds } from "./schema/index";
 import { eq } from "drizzle-orm";
+import { DEFAULT_PREFIX, DEFAULT_XP_COOLDOWN_SECONDS, DEFAULT_XP_MAX, DEFAULT_XP_MIN } from "../constants/defaults";
 
 export async function seedGuild(guildId: string, guildName: string) {
     console.log(`Checking guild "${guildName}" (${guildId}) exists...`);
@@ -19,8 +20,12 @@ export async function seedGuild(guildId: string, guildName: string) {
     await db.insert(guilds).values({
         guildId,
         guildName,
-        prefix: "$",
+        prefix: DEFAULT_PREFIX,
         xpEnabled: true,
+        xpNotifyInDm: true,
+        xpCooldownSeconds: DEFAULT_XP_COOLDOWN_SECONDS,
+        xpMin: DEFAULT_XP_MIN,
+        xpMax: DEFAULT_XP_MAX,
         musicEnabled: true,
     });
 

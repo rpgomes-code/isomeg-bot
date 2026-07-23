@@ -52,7 +52,7 @@ export class EightBallCommand extends Command {
         const responseColor = this.getResponseColor(response);
 
         const embed = new EmbedBuilder()
-            .setTitle("🎱 Magic 8-Ball")
+            .setTitle("Magic 8-Ball")
             .addFields([
                 {
                     name: "Question",
@@ -99,6 +99,6 @@ export class EightBallCommand extends Command {
         }
 
         const response = responses[Math.floor(Math.random() * responses.length)];
-        await message.reply(`🎱 **Magic 8-Ball**\nQuestion: ${question}\nAnswer: ${response}`);
+        await message.reply(`**Magic 8-Ball**\nQuestion: ${question}\nAnswer: ${response}`);
     }
 }

@@ -31,7 +31,7 @@ export class ServerCommand extends Command {
     public override async chatInputRun(interaction: ChatInputCommandInteraction): Promise<void> {
         if (!interaction.guild) {
             await interaction.reply({
-                content: "❌ This command can only be used in a server!",
+                content: "This command can only be used in a server.",
                 flags: [MessageFlags.Ephemeral],
             });
             return;
@@ -55,36 +55,36 @@ export class ServerCommand extends Command {
 
         const embed = new EmbedBuilder()
             .setColor(Colors.DarkOrange)
-            .setTitle(`🏰 ${guild.name}`)
+            .setTitle(guild.name)
             .setThumbnail(guild.iconURL({ size: 256 }) || null)
             .addFields([
                 {
-                    name: "📊 Members",
+                    name: "Members",
                     value: `**Total:** ${guild.memberCount.toLocaleString()}\n**Online:** ${guild.approximatePresenceCount?.toLocaleString() || 'Unknown'}`,
                     inline: true,
                 },
                 {
-                    name: "📅 Created",
+                    name: "Created",
                     value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>\n<t:${Math.floor(guild.createdTimestamp / 1000)}:R>`,
                     inline: true,
                 },
                 {
-                    name: "🆔 Server ID",
+                    name: "Server ID",
                     value: `\`${guild.id}\``,
                     inline: true,
                 },
                 {
-                    name: "👑 Owner",
+                    name: "Owner",
                     value: `<@${guild.ownerId}>`,
                     inline: true,
                 },
                 {
-                    name: "🌟 Nitro Boost",
+                    name: "Nitro Boost",
                     value: `**Level:** ${guild.premiumTier}/3\n**Boosts:** ${guild.premiumSubscriptionCount || 0}`,
                     inline: true,
                 },
                 {
-                    name: "🔧 Verification",
+                    name: "Verification",
                     value: this.getVerificationLevel(guild.verificationLevel),
                     inline: true,
                 }
@@ -103,17 +103,17 @@ export class ServerCommand extends Command {
 
         embed.addFields([
             {
-                name: "📺 Channels",
+                name: "Channels",
                 value: `**Text:** ${textChannels}\n**Voice:** ${voiceChannels}\n**Categories:** ${categories}`,
                 inline: true,
             },
             {
-                name: "🎭 Roles",
+                name: "Roles",
                 value: `**Total:** ${roles}`,
                 inline: true,
             },
             {
-                name: "🌍 Region",
+                name: "Region",
                 value: guild.preferredLocale || "Unknown",
                 inline: true,
             }
@@ -123,7 +123,7 @@ export class ServerCommand extends Command {
         const features = this.getServerFeatures(guild);
         if (features.length > 0) {
             embed.addFields({
-                name: "✨ Server Features",
+                name: "Server Features",
                 value: features.join('\n'),
                 inline: false
             });
@@ -152,34 +152,34 @@ export class ServerCommand extends Command {
         const features: string[] = [];
 
         if (guild.features.includes('PARTNERED')) {
-            features.push('🤝 Discord Partner');
+            features.push('Discord Partner');
         }
         if (guild.features.includes('VERIFIED')) {
-            features.push('✅ Verified Server');
+            features.push('Verified Server');
         }
         if (guild.features.includes('COMMUNITY')) {
-            features.push('🏘️ Community Server');
+            features.push('Community Server');
         }
         if (guild.features.includes('DISCOVERABLE')) {
-            features.push('🔍 Server Discovery');
+            features.push('Server Discovery');
         }
         if (guild.features.includes('FEATURABLE')) {
-            features.push('⭐ Featurable');
+            features.push('Featurable');
         }
         if (guild.features.includes('VANITY_URL')) {
-            features.push('🔗 Custom Invite URL');
+            features.push('Custom Invite URL');
         }
         if (guild.features.includes('BANNER')) {
-            features.push('🖼️ Server Banner');
+            features.push('Server Banner');
         }
         if (guild.features.includes('ANIMATED_ICON')) {
-            features.push('🎬 Animated Icon');
+            features.push('Animated Icon');
         }
         if (guild.features.includes('NEWS')) {
-            features.push('📰 News Channels');
+            features.push('News Channels');
         }
         if (guild.features.includes('WELCOME_SCREEN_ENABLED')) {
-            features.push('👋 Welcome Screen');
+            features.push('Welcome Screen');
         }
 
         return features;

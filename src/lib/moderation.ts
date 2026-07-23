@@ -1,4 +1,6 @@
 import {
+    Colors,
+    EmbedBuilder,
     Guild,
     GuildMember,
     PermissionFlagsBits,
@@ -39,19 +41,25 @@ export async function logModAction(
     const channel = await getModLogChannel(guild);
     if (!channel) return;
 
-    const targetName = "user" in target ? target.user.tag : target.tag;
-    const modName = "user" in moderator ? moderator.user.tag : moderator.tag;
+    const targetUser = "user" in target ? target.user : target;
+    const moderatorUser = "user" in moderator ? moderator.user : moderator;
+    const color = action.includes("Ban")
+        ? Colors.Red
+        : action.includes("Kick")
+            ? Colors.Orange
+            : action.includes("Mute")
+                ? Colors.Yellow
+                : Colors.DarkRed;
 
-    const embed = {
-        title: `${action}`,
-        fields: [
-            { name: "Target", value: targetName, inline: true },
-            { name: "Moderator", value: modName, inline: true },
+    const embed = new EmbedBuilder()
+        .setTitle(`Moderation Audit: ${action}`)
+        .setColor(color)
+        .addFields([
+            { name: "Target", value: `${targetUser.tag}\n\`${targetUser.id}\``, inline: true },
+            { name: "Moderator", value: `${moderatorUser.tag}\n\`${moderatorUser.id}\``, inline: true },
             { name: "Reason", value: reason || "No reason provided", inline: false },
-        ],
-        timestamp: new Date().toISOString(),
-        color: action.includes("Ban") ? 0xff0000 : action.includes("Kick") ? 0xff8800 : action.includes("Mute") ? 0xffaa00 : 0xff4444,
-    };
+        ])
+        .setTimestamp();
 
     await channel.send({ embeds: [embed] });
 }

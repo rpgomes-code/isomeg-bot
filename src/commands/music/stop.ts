@@ -4,6 +4,7 @@ import { ChatInputCommandInteraction, MessageFlags, Message } from 'discord.js';
 import { getPlayer } from '../../music/player';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
+import { getInteractionQueueContext, getMessageQueueContext } from "../../lib/musicGuards";
 
 export class StopCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -39,18 +40,10 @@ export class StopCommand extends Command {
             createdAt: interaction.createdAt
         });
 
-        const player = getPlayer()!;
-        const queue = player.nodes.get(interaction.guildId!);
+        const context = await getInteractionQueueContext(interaction, getPlayer());
+        if (!context) return;
 
-        if (!queue || queue.deleted) {
-            await interaction.reply({
-                content: "Nothing is playing right now.",
-                flags: [MessageFlags.Ephemeral]
-            });
-            return;
-        }
-
-        queue.delete();
+        context.queue.delete();
         await interaction.reply({
             content: "Music stopped and queue cleared. Disconnected from voice channel.",
             flags: [MessageFlags.Ephemeral]
@@ -58,13 +51,9 @@ export class StopCommand extends Command {
     }
 
     public override async messageRun(message: Message, _args: any): Promise<void> {
-        const player = getPlayer()!;
-        const queue = player.nodes.get(message.guildId!);
-        if (!queue || queue.deleted) {
-            await message.reply("Nothing is playing right now.");
-            return;
-        }
-        queue.delete();
+        const context = await getMessageQueueContext(message, getPlayer());
+        if (!context) return;
+        context.queue.delete();
         await message.reply("Stopped and cleared queue. Disconnected from voice channel.");
     }
 }

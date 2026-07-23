@@ -58,11 +58,10 @@ export class LeaderboardCommand extends Command {
             return;
         }
 
-        const medals = ["🥇", "🥈", "🥉"];
         const description = topUsers
             .map((u, i) => {
-                const icon = i < 3 ? medals[i] : `**${i + 1}.**`;
-                return `${icon} <@${u.userId}> — Level **${u.level}** (${u.xp} XP)`;
+                const rank = `**${i + 1}.**`;
+                return `${rank} <@${u.userId}> - Level **${u.level}** (${u.xp} XP)`;
             })
             .join("\n");
 
@@ -76,7 +75,10 @@ export class LeaderboardCommand extends Command {
     }
 
     public override async messageRun(message: Message, _args: any): Promise<void> {
-        if (!message.guild) return;
+        if (!message.guild) {
+            await message.reply("This command can only be used in a server.");
+            return;
+        }
 
         createCommandLog({
             command: this.name,
@@ -98,11 +100,10 @@ export class LeaderboardCommand extends Command {
             return;
         }
 
-        const medals = ["🥇", "🥈", "🥉"];
         const description = topUsers
             .map((u, i) => {
-                const icon = i < 3 ? medals[i] : `**${i + 1}.**`;
-                return `${icon} <@${u.userId}> — Level **${u.level}** (${u.xp} XP)`;
+                const rank = `**${i + 1}.**`;
+                return `${rank} <@${u.userId}> - Level **${u.level}** (${u.xp} XP)`;
             })
             .join("\n");
 

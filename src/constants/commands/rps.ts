@@ -7,9 +7,9 @@ export const choices: RPSChoice[] = [
 ];
 
 export const emojis = {
-    [RPSChoice.Rock]: "🪨",
-    [RPSChoice.Paper]: "📄",
-    [RPSChoice.Scissors]: "✂️",
+    [RPSChoice.Rock]: "Rock",
+    [RPSChoice.Paper]: "Paper",
+    [RPSChoice.Scissors]: "Scissors",
 };
 
 export const winningCombos = {

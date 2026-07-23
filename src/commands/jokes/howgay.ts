@@ -59,7 +59,7 @@ export class HowGayCommand extends Command {
             .addFields([
                 {
                     name: "Result",
-                    value: `${target} is ${percentage}% Gay 🏳️‍🌈`,
+                    value: `${target} is ${percentage}% Gay`,
                     inline: false,
                 },
                 {
@@ -126,6 +126,6 @@ export class HowGayCommand extends Command {
         const filledBars = Math.round((Math.abs(percentage) / 100) * totalBars);
         const emptyBars = totalBars - filledBars;
 
-        return "█".repeat(filledBars) + "░".repeat(emptyBars);
+        return `[${"#".repeat(filledBars)}${"-".repeat(emptyBars)}]`;
     }
 }

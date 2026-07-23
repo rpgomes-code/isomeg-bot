@@ -1,9 +1,7 @@
 import { Listener, Events } from "@sapphire/framework";
+import type { Message } from "discord.js";
 import { addXp, getRandomXp } from "../lib/xp";
-import { db } from "../db";
-import { guilds } from "../db/schema";
-import { eq } from "drizzle-orm";
-import { seedGuild } from "../db/seed";
+import { ensureGuildSettings } from "../lib/guildSettings";
 
 export class MessageCreateListener extends Listener {
     constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -13,33 +11,34 @@ export class MessageCreateListener extends Listener {
         });
     }
 
-    public async run(message: {
-        author: { bot: boolean; id: string; tag: string; displayName: string };
-        guildId: string | null;
-        guild: { name: string } | null;
-    }): Promise<void> {
-        if (message.author.bot || !message.guildId) return;
+    public async run(message: Message): Promise<void> {
+        if (message.author.bot || !message.guildId || !message.guild) return;
 
-        let guildConfig = await db
-            .select({ xpEnabled: guilds.xpEnabled, xpNotifyInDm: guilds.xpNotifyInDm })
-            .from(guilds)
-            .where(eq(guilds.guildId, message.guildId))
-            .limit(1);
+        const guildConfig = await ensureGuildSettings(message.guildId, message.guild.name);
+        if (!guildConfig.xpEnabled) return;
+        if (guildConfig.xpChannelId && guildConfig.xpChannelId !== message.channelId) return;
 
-        if (guildConfig.length === 0) {
-            await seedGuild(message.guildId, message.guild?.name ?? "Unknown Guild");
-            guildConfig = [{ xpEnabled: true, xpNotifyInDm: true }];
-        }
+        const result = await addXp(
+            message.guildId,
+            message.author.id,
+            getRandomXp(guildConfig.xpMin, guildConfig.xpMax),
+            guildConfig.xpCooldownSeconds * 1000
+        );
 
-        if (!guildConfig[0].xpEnabled) return;
+        if (!result.awarded || !result.leveledUp) return;
 
-        const result = await addXp(message.guildId, message.author.id, getRandomXp());
-        if (!result.awarded) return;
+        this.container.logger.info(
+            `Level up! ${message.author.tag} reached level ${result.newLevel} in ${message.guild.name}`
+        );
 
-        if (result.leveledUp) {
-            this.container.logger.info(
-                `Level up! ${message.author.tag} reached level ${result.newLevel} in ${message.guild?.name ?? "Unknown"}`
-            );
+        if (guildConfig.xpNotifyInDm) {
+            await message.author.send(
+                `You reached level ${result.newLevel} in ${message.guild.name}. Nice work.`
+            ).catch((error) => {
+                this.container.logger.warn(
+                    `[XP] Could not DM level-up notification to ${message.author.tag}: ${error instanceof Error ? error.message : error}`
+                );
+            });
         }
     }
 }

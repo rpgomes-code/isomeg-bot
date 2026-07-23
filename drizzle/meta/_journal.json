@@ -8,6 +8,13 @@
       "when": 1775406140978,
       "tag": "0000_tan_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784820639414,
+      "tag": "0001_xp_settings",
+      "breakpoints": true
     }
   ]
 }

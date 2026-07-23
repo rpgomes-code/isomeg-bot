@@ -1,6 +1,6 @@
 {
-  "id": "7c29627a-67d6-48a6-b427-1058aa56a88f",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "57c11994-ee43-4182-8541-3ab2a57a6540",
+  "prevId": "7c29627a-67d6-48a6-b427-1058aa56a88f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -65,6 +65,27 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "xp_cooldown_seconds": {
+          "name": "xp_cooldown_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 30
+        },
+        "xp_min": {
+          "name": "xp_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "xp_max": {
+          "name": "xp_max",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 30
         },
         "music_enabled": {
           "name": "music_enabled",

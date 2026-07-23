@@ -80,7 +80,10 @@ export class DailyCommand extends Command {
     }
 
     public override async messageRun(message: Message, _args: any): Promise<void> {
-        if (!message.guild) return;
+        if (!message.guild) {
+            await message.reply("This command can only be used in a server.");
+            return;
+        }
 
         createCommandLog({
             command: this.name,
