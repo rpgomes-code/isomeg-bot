@@ -1,10 +1,9 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, EmbedBuilder, Colors, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
-import {responses} from "../../constants/commands/8ball";
+import { responses } from "../../constants/commands/8ball";
 
 export class EightBallCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -30,7 +29,6 @@ export class EightBallCommand extends Command {
                             .setRequired(true)
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -83,5 +81,24 @@ export class EightBallCommand extends Command {
         if (responseIndex < 10) return Colors.Green;  // Positive responses
         if (responseIndex < 15) return Colors.Yellow; // Neutral responses
         return Colors.Red; // Negative responses
+    }
+
+    public override async messageRun(message: Message, args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        const question = await args.rest('string').catch(() => null);
+        if (!question) {
+            await message.reply("Please ask a question! `$8ball Will this work?`");
+            return;
+        }
+
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        await message.reply(`🎱 **Magic 8-Ball**\nQuestion: ${question}\nAnswer: ${response}`);
     }
 }

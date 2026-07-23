@@ -1,7 +1,6 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors, User } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, Message, EmbedBuilder, Colors, User } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 
@@ -29,7 +28,6 @@ export class AvatarCommand extends Command {
                             .setRequired(false)
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -93,5 +91,22 @@ export class AvatarCommand extends Command {
         await interaction.reply({
             embeds: [embed]
         });
+    }
+
+    public override async messageRun(message: Message, _args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        const target: User = message.mentions.users.first() ?? message.author;
+        const member = message.guild?.members.cache.get(target.id);
+        const globalAvatarURL = target.avatarURL({ size: 1024 });
+        const serverAvatarURL = member?.avatarURL({ size: 1024 });
+        const displayAvatarURL = serverAvatarURL || globalAvatarURL || target.defaultAvatarURL;
+        await message.reply(`\u{1f5fc}\u{fe0f} **${target.displayName}'s Avatar:** ${displayAvatarURL}`);
     }
 }

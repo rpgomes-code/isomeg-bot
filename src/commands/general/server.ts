@@ -1,7 +1,6 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import {ChatInputCommandInteraction, EmbedBuilder, Colors, Guild, MessageFlags} from 'discord.js';
-import { config } from "../../constants/config";
+import {ChatInputCommandInteraction, EmbedBuilder, Colors, Guild, MessageFlags, Message} from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 
@@ -23,7 +22,6 @@ export class ServerCommand extends Command {
                     .setName('server')
                     .setDescription("Display information about the server."),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -185,5 +183,22 @@ export class ServerCommand extends Command {
         }
 
         return features;
+    }
+
+    public override async messageRun(message: Message, _args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        if (!message.guild) {
+            await message.reply("This command can only be used in a server!");
+            return;
+        }
+
+        await message.reply(`Server info for **${message.guild.name}** - Members: ${message.guild.memberCount}, Owner: <@${message.guild.ownerId}>`);
     }
 }

@@ -1,7 +1,6 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, EmbedBuilder, Colors, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 
@@ -30,7 +29,6 @@ export class CoinflipCommand extends Command {
                             .setMaxValue(100)
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -98,5 +96,30 @@ export class CoinflipCommand extends Command {
         }
 
         await interaction.reply({ embeds: [embed] });
+    }
+
+    public override async messageRun(message: Message, args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        const times = parseInt(await args.single('string').catch(() => null)) || 1;
+        const results: string[] = [];
+        let heads = 0;
+        let tails = 0;
+        for (let i = 0; i < Math.min(times, 100); i++) {
+            const result = Math.random() < 0.5 ? "Heads" : "Tails";
+            results.push(result);
+            if (result === "Heads") heads++; else tails++;
+        }
+        if (times === 1) {
+            await message.reply(`🪙 The coin landed on: **${results[0]}**!`);
+        } else {
+            await message.reply(`🪙 Flipped ${times} coins: ${heads} Heads, ${tails} Tails`);
+        }
     }
 }

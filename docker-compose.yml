@@ -4,8 +4,29 @@
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - 'CLIENT_TOKEN=${CLIENT_TOKEN}'
-      - 'GUILD_ID_FALLEN_BERSERKERS=${GUILD_ID_FALLEN_BERSERKERS}'
-      - 'USER_ID_RPGOMES=${USER_ID_RPGOMES}'
-      - 'USER_ID_JPEREIRA=${USER_ID_JPEREIRA}'
-      - 'USER_ID_RPEREIRA=${USER_ID_RPEREIRA}'
+      - "CLIENT_TOKEN=${CLIENT_TOKEN}"
+      - "GUILD_ID_FALLEN_BERSERKERS=${GUILD_ID_FALLEN_BERSERKERS}"
+      - "USER_ID_RPGOMES=${USER_ID_RPGOMES}"
+      - "USER_ID_JPEREIRA=${USER_ID_JPEREIRA}"
+      - "USER_ID_RPEREIRA=${USER_ID_RPEREIRA}"
+      - "DATABASE_URL=${DATABASE_URL:-postgresql://isomeg:isomeg@db:5432/isomeg}"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - "POSTGRES_USER=${POSTGRES_USER:-isomeg}"
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-isomeg}"
+      - "POSTGRES_DB=${POSTGRES_DB:-isomeg}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-isomeg} -d ${POSTGRES_DB:-isomeg}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

@@ -1,11 +1,10 @@
-﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
+import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, EmbedBuilder, Colors, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 import { RPSChoice } from "../../enums/commands/rps";
-import {choices, emojis, winningCombos} from "../../constants/commands/rps";
+import { choices, emojis, winningCombos } from "../../constants/commands/rps";
 
 export class RPSCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -17,7 +16,6 @@ export class RPSCommand extends Command {
         });
     }
 
-    // Register the slash command
     public override registerApplicationCommands(registry: ApplicationCommandRegistry) {
         registry.registerChatInputCommand(
             (builder) =>
@@ -30,19 +28,17 @@ export class RPSCommand extends Command {
                             .setDescription("Choose your weapon!")
                             .setRequired(true)
                             .addChoices(
-                                { name: "🪨 Rock", value: RPSChoice.Rock },
-                                { name: "📄 Paper", value: RPSChoice.Paper },
-                                { name: "✂️ Scissors", value: RPSChoice.Scissors }
+                                { name: "Rock", value: RPSChoice.Rock },
+                                { name: "Paper", value: RPSChoice.Paper },
+                                { name: "Scissors", value: RPSChoice.Scissors }
                             )
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
     }
 
-    // Handle slash command
     public override async chatInputRun(interaction: ChatInputCommandInteraction): Promise<void> {
         createCommandLog({
             command: this.name,
@@ -61,7 +57,6 @@ export class RPSCommand extends Command {
         let result: string;
         let color: number;
 
-        // Determine a winner and set color
         if (userChoice === botChoice) {
             result = "It's a tie!";
             color = Colors.Yellow;
@@ -73,18 +68,21 @@ export class RPSCommand extends Command {
             color = Colors.Red;
         }
 
+        const userEmoji = emojis[userChoice];
+        const botEmoji = emojis[botChoice];
+
         const embed = new EmbedBuilder()
             .setColor(color)
-            .setTitle("🎮 Rock Paper Scissors")
+            .setTitle("Rock Paper Scissors")
             .addFields([
                 {
                     name: "Your Choice",
-                    value: `${emojis[userChoice]} ${this.capitalizeFirst(userChoice)}`,
+                    value: `${userEmoji} ${this.capitalizeFirst(userChoice)}`,
                     inline: true,
                 },
                 {
                     name: "My Choice",
-                    value: `${emojis[botChoice]} ${this.capitalizeFirst(botChoice)}`,
+                    value: `${botEmoji} ${this.capitalizeFirst(botChoice)}`,
                     inline: true,
                 },
                 {
@@ -108,5 +106,30 @@ export class RPSCommand extends Command {
 
     private capitalizeFirst(str: string): string {
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    public override async messageRun(message: Message, args: any): Promise<void> {
+        const userChoice = (await args.single('string').catch(() => null))?.toLowerCase() as RPSChoice;
+        if (!choices.includes(userChoice)) {
+            await message.reply("Please choose rock, paper, or scissors! e.g. `$rps rock`");
+            return;
+        }
+
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        const botChoice = this.getRandomChoice();
+        let result: string;
+        if (userChoice === botChoice) { result = "It's a tie!"; }
+        else if (winningCombos[userChoice] === botChoice) { result = "You win!"; }
+        else { result = "I win!"; }
+        const userEmoji = emojis[userChoice];
+        const botEmoji = emojis[botChoice];
+        await message.reply(`${userEmoji} ${this.capitalizeFirst(userChoice)} vs ${botEmoji} ${this.capitalizeFirst(botChoice)} - ${result}`);
     }
 }

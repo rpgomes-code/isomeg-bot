@@ -1,6 +1,19 @@
-﻿import {Client} from './core/client';
-import {config} from './constants/config';
+import { config } from './constants/config';
+import { runMigrations } from './db/migrate';
+import { Client } from './core/client';
 
-const client: Client = new Client();
+async function main(): Promise<void> {
+    if (!config.botConfig.clientToken) {
+        throw new Error("CLIENT_TOKEN is not defined in environment variables");
+    }
 
-client.login(config.botConfig.clientToken)
+    await runMigrations();
+
+    const client: Client = new Client();
+    await client.login(config.botConfig.clientToken);
+}
+
+main().catch((error) => {
+    console.error("[Startup] Failed to start bot:", error);
+    process.exit(1);
+});

@@ -1,9 +1,8 @@
-﻿import type {ApplicationCommandRegistry} from '@sapphire/framework';
-import {Command} from '@sapphire/framework';
-import {ChatInputCommandInteraction, MessageFlags} from 'discord.js';
-import {config} from "../../constants/config";
-import {createCommandLog} from "../../lib/logger";
-import {CommandType} from "../../enums/commands/general";
+import type { ApplicationCommandRegistry } from "@sapphire/framework";
+import { Command } from "@sapphire/framework";
+import { ChatInputCommandInteraction, Message } from "discord.js";
+import { createCommandLog } from "../../lib/logger";
+import { CommandType } from "../../enums/commands/general";
 
 export class PingCommand extends Command {
     constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -11,51 +10,48 @@ export class PingCommand extends Command {
             ...options,
             name: "ping",
             description: "Check the bot's latency.",
-            aliases: ["pong"]
+            aliases: ["pong"],
         });
     }
 
-    // Register the slash command
     public override registerApplicationCommands(registry: ApplicationCommandRegistry) {
         registry.registerChatInputCommand(
             (builder) =>
                 builder
-                    .setName('ping')
+                    .setName("ping")
                     .setDescription("Check the bot's latency."),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
     }
 
-    // Handle slash command
     public override async chatInputRun(interaction: ChatInputCommandInteraction): Promise<void> {
+        const content = this.runCommand(
+            interaction.user.username,
+            interaction.user.tag,
+            interaction.guild?.name ?? "DM",
+            interaction.createdAt
+        );
+
+        await interaction.reply({ content });
+    }
+
+    public override async messageRun(message: Message, _args: unknown): Promise<void> {
+        const latency = Math.round(this.container.client.ws.ping);
+        await message.reply(`Pong! Latency: \`${latency}ms\``);
+    }
+
+    private runCommand(user: string, username: string, guild: string, createdAt: Date): string {
         createCommandLog({
-            command: Command.name,
-            guild: interaction.guild?.name ?? "DM",
+            command: this.name,
+            guild,
             type: CommandType.Slash,
-            user: {
-                username: interaction.user.username,
-                displayName: interaction.user.tag
-            },
-            createdAt: interaction.createdAt
-        })
-
-        const startTime = Date.now();
-
-        await interaction.reply({
-            content: '🔄 *Pinging...*',
-            flags: [
-                MessageFlags.Ephemeral
-            ]
+            user: { username, displayName: user },
+            createdAt,
         });
 
-        const endTime = Date.now();
-        const apiLatency = Math.abs(endTime - startTime);
-
-        const content = `🏓 **Pong!**\n**Latency:** \`${Math.abs(Math.round(this.container.client.ws.ping))}ms\`\n**API Latency:** \`${apiLatency}ms\``;
-
-        await interaction.editReply({ content });
+        const latency = Math.round(this.container.client.ws.ping);
+        return `Pong! Latency: \`${latency}ms\``;
     }
 }

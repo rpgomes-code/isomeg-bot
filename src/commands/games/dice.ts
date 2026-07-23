@@ -1,7 +1,6 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, EmbedBuilder, Colors, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 
@@ -42,7 +41,6 @@ export class DiceCommand extends Command {
                             .setDescription("Show the sum of all dice (default: false)")
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -121,5 +119,38 @@ export class DiceCommand extends Command {
         }
 
         await interaction.reply({ embeds: [embed] });
+    }
+
+    public override async messageRun(message: Message, args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        const sidesArg = await args.single('string').catch(() => null);
+        const countArg = await args.single('string').catch(() => null);
+        const sumArg = await args.single('string').catch(() => null);
+        const sides = Math.min(Math.max(parseInt(sidesArg) || 6, 2), 100);
+        const count = Math.min(Math.max(parseInt(countArg) || 1, 1), 5);
+        const showSum = sumArg === "true";
+
+        const rolls: number[] = [];
+        let total = 0;
+        for (let i = 0; i < count; i++) {
+            const roll = Math.floor(Math.random() * sides) + 1;
+            rolls.push(roll);
+            total += roll;
+        }
+
+        if (count === 1) {
+            await message.reply(`🎲 You rolled a **${rolls[0]}**!`);
+        } else {
+            let desc = `Rolling ${count} d${sides}: ${rolls.join(", ")}`;
+            if (showSum) desc += ` | Total: **${total}**`;
+            await message.reply(desc);
+        }
     }
 }

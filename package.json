@@ -9,22 +9,42 @@
     "dev:build": "tsc --watch",
     "start": "node dist/index.js",
     "build": "tsc",
-    "clean": "rmdir /s /q dist"
+    "clean": "rm -rf dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "Rui Pedro Gomes (RPGOMES)",
   "license": "ISC",
   "type": "commonjs",
+  "packageManager": "pnpm@10.34.5",
   "dependencies": {
+    "@discord-player/extractor": "^7.2.0",
+    "@discordjs/voice": "^0.19.2",
     "@sapphire/framework": "^5.3.6",
     "@sapphire/pieces": "^4.4.1",
+    "discord-player": "^7.2.0",
     "discord.js": "14.x",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.45.2",
+    "ffmpeg-static": "^5.3.0",
+    "howlongtobeat-ts": "^1.0.4",
+    "libsodium-wrappers": "^0.8.2",
+    "postgres": "^3.4.8"
   },
   "devDependencies": {
     "@types/node": "^24.0.10",
+    "@types/pg": "^8.20.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "concurrently": "^9.1.2",
+    "drizzle-kit": "^0.31.10",
     "nodemon": "^3.1.10",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.2"
   }
 }

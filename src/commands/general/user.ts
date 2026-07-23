@@ -1,7 +1,6 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, Colors, User } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, EmbedBuilder, Colors, User, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 
@@ -29,7 +28,6 @@ export class UserCommand extends Command {
                             .setRequired(false)
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -141,5 +139,17 @@ export class UserCommand extends Command {
         }
 
         await interaction.reply({ embeds: [embed] });
+    }
+
+    public override async messageRun(message: Message, _args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        await message.reply(`User info for **${message.author.username}** (ID: ${message.author.id})`);
     }
 }

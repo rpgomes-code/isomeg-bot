@@ -1,7 +1,6 @@
 ﻿import type { ApplicationCommandRegistry } from '@sapphire/framework';
 import { Command } from '@sapphire/framework';
-import { ChatInputCommandInteraction, EmbedBuilder, User, MessageFlags } from 'discord.js';
-import { config } from "../../constants/config";
+import { ChatInputCommandInteraction, EmbedBuilder, User, MessageFlags, Message } from 'discord.js';
 import { createCommandLog } from "../../lib/logger";
 import { CommandType } from "../../enums/commands/general";
 import { RarityLevel } from "../../types/commands/howgay";
@@ -31,7 +30,6 @@ export class HowGayCommand extends Command {
                             .setRequired(false)
                     ),
             {
-                guildIds: [...config.guilds.map(guild => guild.id)],
                 registerCommandIfMissing: true,
             }
         );
@@ -87,6 +85,21 @@ export class HowGayCommand extends Command {
         await interaction.reply({
             embeds: [embed]
         });
+    }
+
+    public override async messageRun(message: Message, _args: any): Promise<void> {
+        createCommandLog({
+            command: this.name,
+            guild: message.guild?.name ?? "DM",
+            type: CommandType.Normal,
+            user: { username: message.author.username, displayName: message.author.username! },
+            createdAt: message.createdAt
+        });
+
+        const target = message.mentions.users.first() ?? message.author;
+        const percentage = this.generateRandomPercentage();
+        const rarity = this.getRarityLevel(percentage);
+        await message.reply(`${rarity.emoji} ${target.toString()} is ${percentage}% Gay ${rarity.label}`);
     }
 
     private getRarityLevel(percentage: number): RarityLevel {

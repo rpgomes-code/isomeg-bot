@@ -1,6 +1,6 @@
-﻿import {SapphireClient} from '@sapphire/framework';
-import {GatewayIntentBits, Partials} from 'discord.js';
-import {config} from '../constants/config';
+﻿import { SapphireClient } from '@sapphire/framework';
+import { GatewayIntentBits, Partials } from 'discord.js';
+import { config } from '../constants/config';
 
 export class Client extends SapphireClient {
     constructor() {
@@ -8,7 +8,8 @@ export class Client extends SapphireClient {
             intents: [
                 GatewayIntentBits.Guilds,
                 GatewayIntentBits.MessageContent,
-                GatewayIntentBits.GuildMessages
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.GuildVoiceStates
             ],
             partials: [
                 Partials.User,
