@@ -1,58 +1,62 @@
-# Event Bingo
+# Bingo Cards
 
-Bingo is designed for game showcases and similar live events. Each player writes
-25 predictions on a personal 5x5 card before the event, then marks the predictions
-that happen. There is no free centre square. A full row, column, or either diagonal
-counts as a line (12 possible lines on a completely marked card).
+Create a personal 5x5 prediction card for a game showcase or any other event.
+A full row, column, or either diagonal counts as a line. There is no free centre
+square; a fully marked card has 12 lines.
 
-## Event Flow
+## Card Flow
 
-1. The host runs `/bingo create title:Game Showcase` and shares the event ID.
-2. Players run `/bingo join event-id:<id>` to create their own cards. Joining again
-   reopens the same card; there is one card per player per event.
-3. Click a square to edit its prediction, or run `/bingo edit card-id:<id> row:1`
-   to fill five predictions at once. Repeat for rows 2-5.
-4. Run `/bingo submit card-id:<id>` when all 25 distinct predictions are ready.
-   `/bingo unlock card-id:<id>` allows changes before the event starts, but the
-   card must then be submitted again.
-5. The host runs `/bingo start event-id:<id>`. This locks predictions and closes
-   submissions. Unsubmitted cards cannot participate in live marking.
-6. Open `/bingo card card-id:<id>` for the live controls. Click a square to mark
-   or unmark it. Every click saves immediately and recalculates completed lines.
-7. Use `/bingo results event-id:<id>` for standings, with the optional `page`
-   parameter for more results. Submitted cards rank by lines, then marked squares.
-8. The host runs `/bingo end event-id:<id>` to freeze the final cards and results.
+1. Run `/bingo name:Game Showcase` to create a named card in the channel.
+2. Click any square. Enter its prediction in the popup and submit it; the same
+   card updates immediately. Repeat for the other squares.
+3. Click **Confirm Choices** when all 25 distinct predictions are ready.
+   This permanently locks the predictions and enables marking.
+4. Click squares as predictions happen. Clicking a marked square unmarks it.
+   The card saves each click and displays completed lines automatically.
+5. **Check** refreshes the card and privately reports the current lines.
+   **View Choices** shows the full predictions when button labels are shortened.
 
-`/bingo events` lists the ten most recent events in the server. Cards are shown
-privately by default; `/bingo card card-id:<id> public:true` shares a card in the
-channel. The buttons show abbreviated predictions; the embed shows the full text.
+Only the card's creator can edit, confirm, mark, or unmark it. Other members,
+including administrators, can view the card but cannot change it. Marking is
+self-reported: the bot detects lines, not whether announcements actually happened.
 
-## Ownership and Persistence
+There are no event IDs, joining, host controls, or separate submission commands.
+Multiple people can make their own cards with the same name.
 
-Only a card's creator can edit, submit, unlock, mark, or unmark it. The event host
-and server administrators have no override for another person's card. They can
-view cards in the same server, just like other members. Only the event creator
-can start and end an event. These transitions cannot be reversed.
+## Saved Cards
 
-All state is stored in Postgres and survives bot restarts. Each edit and mark
-checks the actual Discord user, the server, event phase, and card revision.
-Old forms and conflicting simultaneous clicks are rejected rather than
-overwriting newer changes. Reopen `/bingo card` after changing event phase or
-when another copy of a card is out of date.
+Run `/bingo` without a name to open a private dropdown of your saved cards in
+this server. The list has Previous/Next controls when needed. Selecting a card
+opens its interactive controls, including after a bot restart.
 
-Marks are self-reported by each card owner. The bot checks completed lines; it
-does not verify announcements or award economy currency.
+The equivalent prefix command is `$bingo Game Showcase` (using the server's
+configured prefix). Without a name it lists your cards in the channel.
+
+All data is stored in Postgres. Ownership and server checks happen on every
+mutation. Revision checks and row locks prevent an old form or simultaneous
+click from overwriting newer choices. A stale control refreshes that copy of the
+card and asks you to try again. Other copies refresh on their next interaction.
 
 ## Deployment and Verification
 
-Migration `0003_event_bingo.sql` adds the event and card tables. The existing
-startup migration runner applies it automatically. No additional environment
-variables or Discord intents are required for bingo.
+Migration `0004_named_bingo_cards.sql` copies each existing card's name and server
+from its old event before making those card fields required. Existing card IDs,
+owners, predictions, marks, confirmation timestamps, and revisions are preserved.
+Previously submitted cards are locked and ready to mark; drafts remain editable.
+The old event table and links remain for compatibility but no longer control play.
+The startup migration runner applies this automatically.
 
-Run `pnpm build` and `pnpm test:run`. To include database tests, migrate an isolated
-Postgres database, set `DATABASE_URL` to it and set `RUN_DB_TESTS=true`, then run the
-test suite. CI already includes Postgres and runs these checks.
+The card uses Discord Components V2 so all 25 square buttons and confirmation
+controls fit into one message. Editing a square opens a Discord text-input modal;
+Discord does not offer inline typing directly inside a button. No additional
+environment variables or Discord intents are needed.
 
-Before release, test in Discord with two accounts: create a card as one user,
-share it publicly, and attempt edits and marks as the other user. Also verify
-row editing, submission, start, marking/unmarking a line, results, and end.
+Run `pnpm build` and `pnpm test:run`. For integration tests, set `DATABASE_URL` to
+an isolated Postgres database and `RUN_DB_TESTS=true`. The migration upgrade test
+also creates and removes a uniquely named temporary database, so the test role
+needs CREATEDB permission. CI's Postgres test role already has this permission.
+
+Before release, verify the rendered card in desktop and mobile Discord: fill
+squares, confirm choices, mark/unmark a line, reopen a saved card, and attempt
+changes from a second account. Unit and database tests do not replace a live
+Discord rendering check.

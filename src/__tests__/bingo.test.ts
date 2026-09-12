@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { ButtonStyle, ComponentType, MessageFlags } from "discord.js";
 import { assertCompleteCard, completedLines, editPredictions, markedCount } from "../lib/bingoRules";
-import { bingoCardPayload, bingoEditModal, bingoResultsEmbed } from "../lib/bingoPresentation";
-import type { BingoCard, BingoEvent } from "../db/schema";
+import { bingoCardPayload, bingoCardPicker, bingoCardUpdate, bingoChoicesEmbed, bingoEditModal } from "../lib/bingoPresentation";
+import type { BingoCard } from "../db/schema";
 
-const event: BingoEvent = {
-    id: "00000000-0000-4000-8000-000000000001", guildId: "guild", createdById: "host",
-    title: "Game Showcase", status: "open", createdAt: new Date(),
-};
 const card: BingoCard = {
-    id: "00000000-0000-4000-8000-000000000002", eventId: event.id, createdById: "player",
-    predictions: Array.from({ length: 25 }, (_, i) => `Announcement ${i + 1}`),
+    id: "00000000-0000-4000-8000-000000000002", eventId: null, guildId: "guild", title: "Game Showcase", createdById: "123",
+    predictions: Array.from({ length: 25 }, (_, i) => "Announcement " + (i + 1)),
     marks: 0, revision: 0, submittedAt: null, createdAt: new Date(),
 };
 const mask = (indices: number[]) => indices.reduce((marks, index) => marks | (1 << index), 0);
@@ -53,39 +50,88 @@ describe("prediction validation", () => {
     });
 });
 
-describe("Discord bingo presentation", () => {
-    it("fits a full card into Discord limits with 25 buttons and escaped predictions", () => {
-        const payload = bingoCardPayload({ event, card: { ...card, predictions: Array(25).fill("*".repeat(80)) } });
-        const embed = payload.embeds[0].toJSON();
-        expect(payload.embeds[0].length).toBeLessThanOrEqual(6000);
-        expect(embed.fields?.every(field => field.value.length <= 1024)).toBe(true);
-        expect(payload.components).toHaveLength(5);
-        for (const row of payload.components) {
-            expect(row.toJSON().components).toHaveLength(5);
-            expect(row.toJSON().components.every(button => "custom_id" in button && button.custom_id.length <= 100)).toBe(true);
-        }
-        expect(bingoEditModal(card, 20, 5).toJSON().components).toHaveLength(5);
-        expect(bingoEditModal({ ...card, predictions: Array(25).fill("") }, 0, 1).toJSON()).toBeTruthy();
-    });
 
-    it("enables only draft editing or live marking and disables ended cards", () => {
-        for (const status of ["open", "live", "ended"] as const) {
-            for (const submitted of [false, true]) {
-                const payload = bingoCardPayload({ event: { ...event, status }, card: { ...card, submittedAt: submitted ? new Date() : null } });
-                const disabled = payload.components[0].toJSON().components[0].disabled;
-                expect(disabled).toBe(!((status === "open" && !submitted) || (status === "live" && submitted)));
+describe("Discord bingo presentation", () => {
+    it("renders all 25 editable squares and confirmation together within V2 limits", () => {
+        const payload = bingoCardPayload(card);
+        const container = payload.components[0].toJSON();
+        const rows = container.components.filter(component => component.type === ComponentType.ActionRow);
+        expect(payload.flags).toBe(MessageFlags.IsComponentsV2);
+        expect(payload).not.toHaveProperty("embeds");
+        expect(payload).not.toHaveProperty("content");
+        expect(rows).toHaveLength(6);
+        expect(rows.slice(0, 5).flatMap(row => row.components)).toHaveLength(25);
+        for (const row of rows.slice(0, 5)) {
+            expect(row.components).toHaveLength(5);
+            for (const button of row.components) {
+                expect(button).toMatchObject({ type: ComponentType.Button, style: ButtonStyle.Secondary });
+                expect("custom_id" in button && button.custom_id.length <= 100).toBe(true);
+                expect("disabled" in button && button.disabled).toBeFalsy();
             }
         }
+        expect(rows[5].components[0]).toMatchObject({ label: "Confirm Choices", disabled: false });
+        const componentCount = 1 + container.components.length + rows.reduce((sum, row) => sum + row.components.length, 0);
+        expect(componentCount).toBeLessThanOrEqual(40);
     });
 
-    it("ranks submitted cards by lines and excludes drafts, with bounded pages", () => {
-        const cards = Array.from({ length: 22 }, (_, index) => ({
-            ...card, createdById: `player-${index}`, submittedAt: index ? new Date() : null, marks: index === 21 ? 31 : 0,
-        }));
-        const result = bingoResultsEmbed(event, cards, 1).toJSON();
-        expect(result.description).toContain("**1.** <@player-21>");
-        expect(result.description).not.toContain("<@player-0>");
-        expect(result.footer?.text).toContain("Page 1/3");
-        expect(bingoResultsEmbed(event, cards, 100).toJSON().footer?.text).toContain("Page 3/3");
+    it("disables confirmation until all 25 squares contain choices", () => {
+        const incomplete = { ...card, predictions: [...card.predictions.slice(0, 24), ""] };
+        const container = bingoCardPayload(incomplete).components[0].toJSON();
+        const rows = container.components.filter(component => component.type === ComponentType.ActionRow);
+        expect(rows[5].components[0]).toMatchObject({ label: "Confirm Choices", disabled: true });
+        expect(JSON.stringify(container)).toContain("24/25 choices");
+        expect(JSON.stringify(rows[4].components[4])).toContain("E5 +");
+    });
+
+    it("keeps all locked squares interactive and exposes line results on the card", () => {
+        const container = bingoCardPayload({ ...card, submittedAt: new Date(), marks: 31 }).components[0].toJSON();
+        const rows = container.components.filter(component => component.type === ComponentType.ActionRow);
+        expect(rows[0].components[0]).toMatchObject({ label: "A1 [X] Announcement 1", style: ButtonStyle.Success });
+        expect(rows[1].components[0]).toMatchObject({ style: ButtonStyle.Secondary });
+        expect(rows[5].components[0]).toMatchObject({ label: "Check", disabled: false });
+        expect(JSON.stringify(container)).toContain("BINGO!** Row 1");
+        expect(JSON.stringify(container)).not.toContain("Confirm Choices");
+        expect(JSON.stringify(container)).not.toContain('"disabled":true');
+    });
+
+    it("clears legacy content and embeds when updating a card", () => {
+        expect(bingoCardUpdate(card)).toMatchObject({ content: null, embeds: [], flags: MessageFlags.IsComponentsV2 });
+    });
+
+    it("bounds long predictions and shows escaped full choices separately", () => {
+        const long = { ...card, predictions: Array(25).fill("*".repeat(80)), title: "*Showcase*" };
+        const payload = bingoCardPayload(long);
+        expect(JSON.stringify(payload)).toContain("...");
+        const choices = bingoChoicesEmbed(long);
+        expect(choices.length).toBeLessThanOrEqual(6000);
+        expect(choices.toJSON().fields?.every(field => field.value.length <= 1024)).toBe(true);
+        expect(choices.toJSON().fields?.[0].value).toContain("\\*");
+        const emojiCard = { ...card, predictions: Array(25).fill(String.fromCodePoint(0x1f3ae).repeat(40)) };
+        const rows = bingoCardPayload(emojiCard).components[0].toJSON().components.filter(component => component.type === ComponentType.ActionRow);
+        const button = rows[0].components[0];
+        expect("label" in button && button.label?.length).toBeLessThanOrEqual(80);
+    });
+
+    it("prefills single-square modals and accepts empty drafts and old row forms", () => {
+        const modal = bingoEditModal(card, 24).toJSON();
+        expect(modal.title).toBe("Prediction E5");
+        expect(modal.custom_id).toBe("bingo:save:" + card.id + ":0:24:1");
+        expect(modal.components).toHaveLength(1);
+        expect(JSON.stringify(modal)).toContain('"value":"Announcement 25"');
+        expect(bingoEditModal(card, 20, 5).toJSON().components).toHaveLength(5);
+        expect(bingoEditModal({ ...card, predictions: Array(25).fill("") }, 0).toJSON()).toBeTruthy();
+    });
+
+    it("provides an owner-scoped saved-card picker with bounded pagination", () => {
+        const cards = Array.from({ length: 25 }, (_, index) => ({ ...card, id: "card-" + index }));
+        const picker = bingoCardPicker("123", { cards, page: 0, hasMore: true });
+        const select = picker.components[0].toJSON().components[0];
+        expect(select).toMatchObject({ custom_id: "bingo:open:123" });
+        expect("options" in select && select.options).toHaveLength(25);
+        expect(picker.components[1].toJSON().components).toMatchObject([
+            { custom_id: "bingo:cards:123:0", disabled: true },
+            { custom_id: "bingo:cards:123:1", disabled: false },
+        ]);
+        expect(bingoCardPicker("123", { cards: [], page: 0, hasMore: false }).content).toContain("/bingo name:");
     });
 });

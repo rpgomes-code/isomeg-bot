@@ -1,10 +1,11 @@
-import type { BingoCard, BingoEvent } from "../db/schema/bingo";
+import type { BingoCard } from "../db/schema/bingo";
 
 export const BINGO_SIZE = 5;
 export const BINGO_SQUARES = BINGO_SIZE * BINGO_SIZE;
 export const BINGO_PREDICTION_LENGTH = 80;
 
 export class BingoError extends Error {}
+export class BingoStaleCardError extends BingoError {}
 
 export function validateBingoId(id: string): void {
     if (!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(id)) {
@@ -41,17 +42,16 @@ export function markedCount(marks: number): number {
 
 export function assertCardOwner(card: BingoCard, userId: string): void {
     if (card.createdById !== userId) {
-        throw new BingoError("Only the person who created this card can edit, submit, unlock, or mark it.");
+        throw new BingoError("Only the person who created this card can edit, confirm, or mark it.");
     }
 }
 
-export function assertCardEditable(event: BingoEvent, card: BingoCard): void {
-    if (event.status !== "open") throw new BingoError("Predictions are locked because this event has started or ended.");
-    if (card.submittedAt) throw new BingoError("This card is submitted. Use /bingo unlock before editing it.");
+export function assertCardEditable(card: BingoCard): void {
+    if (card.submittedAt) throw new BingoError("Choices are confirmed and locked. Squares can now be marked, but predictions cannot be changed.");
 }
 
 export function assertCardRevision(card: BingoCard, revision: number): void {
-    if (card.revision !== revision) throw new BingoError("This copy of the card is out of date. Open /bingo card for the latest version.");
+    if (card.revision !== revision) throw new BingoStaleCardError("This card has changed. Open it again with /bingo to see the latest choices.");
 }
 
 export function editPredictions(predictions: string[], start: number, values: string[]): string[] {
@@ -69,7 +69,7 @@ export function editPredictions(predictions: string[], start: number, values: st
 
 export function assertCompleteCard(predictions: string[]): void {
     if (predictions.length !== BINGO_SQUARES || predictions.some(value => !value.trim() || value.length > BINGO_PREDICTION_LENGTH)) {
-        throw new BingoError("Fill all 25 squares before submitting your card.");
+        throw new BingoError("Fill all 25 squares before confirming your choices.");
     }
     if (new Set(predictions.map(value => value.trim().toLowerCase())).size !== BINGO_SQUARES) {
         throw new BingoError("Each square needs a different prediction.");

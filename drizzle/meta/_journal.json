@@ -29,6 +29,13 @@
       "when": 1789212691649,
       "tag": "0003_event_bingo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789214894340,
+      "tag": "0004_named_bingo_cards",
+      "breakpoints": true
     }
   ]
 }

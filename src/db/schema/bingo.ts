@@ -16,7 +16,9 @@ export const bingoEvents = pgTable("bingo_events", {
 
 export const bingoCards = pgTable("bingo_cards", {
     id: uuid("id").defaultRandom().primaryKey(),
-    eventId: uuid("event_id").notNull().references(() => bingoEvents.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id").references(() => bingoEvents.id, { onDelete: "cascade" }),
+    guildId: varchar("guild_id", { length: 30 }).notNull().references(() => guilds.guildId),
+    title: varchar("title", { length: 100 }).notNull(),
     createdById: varchar("created_by_id", { length: 30 }).notNull(),
     predictions: jsonb("predictions").$type<string[]>().notNull(),
     marks: integer("marks").notNull().default(0),
@@ -24,6 +26,7 @@ export const bingoCards = pgTable("bingo_cards", {
     submittedAt: timestamp("submitted_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
+    index("bingo_cards_guild_creator_idx").on(table.guildId, table.createdById),
     unique("bingo_cards_event_creator_unique").on(table.eventId, table.createdById),
     check("bingo_cards_predictions_check", sql`jsonb_typeof(${table.predictions}) = 'array' and jsonb_array_length(${table.predictions}) = 25`),
     check("bingo_cards_marks_check", sql`${table.marks} between 0 and 33554431`),

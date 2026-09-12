@@ -8,7 +8,7 @@ export class BingoInteractionListener extends Listener<typeof Events.Interaction
     }
 
     public async run(interaction: Interaction): Promise<void> {
-        if ((interaction.isButton() || interaction.isModalSubmit()) && interaction.customId.startsWith("bingo:")) {
+        if ((interaction.isButton() || interaction.isModalSubmit() || interaction.isStringSelectMenu()) && interaction.customId.startsWith("bingo:")) {
             await handleBingoInteraction(interaction);
         }
     }
