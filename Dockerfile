@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache ffmpeg && npm install -g pnpm
+RUN apk add --no-cache ffmpeg && npm install -g pnpm@10.34.5
 
 WORKDIR /app
 
