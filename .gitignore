@@ -4,6 +4,7 @@
 /.idea/
 /.memory/
 /memory/
+/backups/command-registrations/
 .env
 .env.*
 !.env.example
